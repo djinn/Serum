@@ -14,6 +14,8 @@ defmodule Serum.CLI do
   (`Serum.CLI.main/1`).
   """
 
+  alias Serum.SiteBuilder
+
   @behaviour Serum.CLI.Task
 
   @main_task_providers [
@@ -104,6 +106,27 @@ defmodule Serum.CLI do
     |> Enum.map(&{&1, &1.tasks()})
     |> Enum.map(fn {mod, l} -> Enum.map l, &{&1, mod.short_help(&1)} end)
     |> List.flatten
+  end
+
+  defp in_project_dir? do
+    null = spawn_link fn -> io_blackhole() end
+    with {:ok, pid} <- SiteBuilder.start_link(System.cwd!() || "/", ""),
+         Process.group_leader(pid, null),
+         {:ok, _} <- SiteBuilder.load_info(pid),
+         SiteBuilder.stop(pid)
+    do
+      true
+    else
+      _ -> false
+    end
+  end
+
+  defp io_blackhole do
+    receive do
+      {:io_request, from, reply_as, {:put_chars, _enc, _chars}} ->
+        send from, {:io_reply, reply_as, :ok}
+        io_blackhole()
+    end
   end
 
   #
