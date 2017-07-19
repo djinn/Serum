@@ -109,23 +109,16 @@ defmodule Serum.CLI do
   end
 
   defp in_project_dir? do
-    null = spawn_link fn -> io_blackhole() end
-    with {:ok, pid} <- SiteBuilder.start_link(System.cwd!() || "/", ""),
+    with {:ok, null} <- StringIO.open(""),
+         {:ok, pid} <- SiteBuilder.start_link(System.cwd!() || "/", ""),
          Process.group_leader(pid, null),
          {:ok, _} <- SiteBuilder.load_info(pid),
-         SiteBuilder.stop(pid)
+         SiteBuilder.stop(pid),
+         StringIO.close(null)
     do
       true
     else
       _ -> false
-    end
-  end
-
-  defp io_blackhole do
-    receive do
-      {:io_request, from, reply_as, {:put_chars, _enc, _chars}} ->
-        send from, {:io_reply, reply_as, :ok}
-        io_blackhole()
     end
   end
 
