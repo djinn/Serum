@@ -27,6 +27,7 @@ defmodule Serum.Validation do
         "list_title_tag": { "type": "string" },
         "pagination": { "type": "boolean" },
         "posts_per_page": { "type": "integer", "minimum": 1 }
+        "url": {"type": "string", "pattern": "^http.*$"}
       },
       "additionalProperties": false,
       "required": [
